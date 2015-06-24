@@ -24,7 +24,13 @@
 				Message: <input type="text" name="Post" />
 				<input type="submit" value="Post" />
 			</form>
+			<form action="/upload" method="post" enctype="multipart/form-data">
+		 	<label for="file">Filename:</label>
+		 	<input type="file" name="file" id="file">
+		 	<input type="submit" name="submit" value="Submit">
+	 	</form> 
 		</div>
+		
 	</div>
 </body>
 
@@ -33,7 +39,12 @@
 {{define "post"}}
 	<div class="post">
 			<div class="postContents">
+			{{if !.isFile}}
 				{{.Time.Format "3:04PM"}} -- <b>{{.Name}}</b> <i>says:</i> {{.Message}}
+			{{else}}
+				{{.Time.Format "3:04PM"}} -- <b>{{.Name}}</b> <i>has uploaded a file</i>
+				<img src={{.Mesage}}/>
+			{{end}}
 			</div>
 			{{range $index, $post := .Replies}}
 				{{template "post" $post}}

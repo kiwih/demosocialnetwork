@@ -10,7 +10,9 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +24,7 @@ type Post struct {
 	Id      string
 	Name    string
 	Message string
+	isFile  bool
 	Time    time.Time
 	Replies []Post
 }
@@ -108,6 +111,60 @@ func newPostHandler(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/", http.StatusSeeOther)
 }
 
+// function to process file uploads
+func uploadHandler(w http.ResponseWriter, req *http.Request) {
+
+	if req.Method != "POST" {
+		handler(w, req)
+		return
+	}
+	// the FormFile function takes in the POST input id file
+	file, header, err := req.FormFile("file")
+	if err != nil {
+		fmt.Println(err.Error)
+		return
+	}
+
+	defer file.Close()
+
+	out, err := os.Create("./tmp/" + header.Filename)
+	if err != nil {
+		fmt.Println(err.Error)
+		return
+	}
+	if err != nil {
+		fmt.Fprintf(w, "Unable to create the file for writing. Check your write access privilege")
+		return
+	}
+
+	defer out.Close()
+
+	// write the content from POST to the file
+	_, err = io.Copy(out, file)
+	if err != nil {
+		fmt.Fprintln(w, err)
+	}
+
+	fmt.Fprintf(w, "File uploaded successfully : ")
+	fmt.Fprintf(w, header.Filename)
+
+	// Save Filename into post and set flag.
+	var newId = len(Posts)
+	var nameStr = req.FormValue("Name")
+	var replyStr = "/tmp/" + header.Filename
+	var currentTime = time.Now()
+
+	newPost := Post{
+		Id:      string(newId),
+		Name:    nameStr,
+		Message: replyStr,
+		Time:    currentTime,
+		isFile:  true,
+	}
+
+	Posts = append(Posts, newPost)
+}
+
 //This handler is the home page, and just shows the client the templates that render all the posts.
 func handler(w http.ResponseWriter, req *http.Request) {
 	if err := templates.Execute(w, Posts); err != nil {
@@ -164,8 +221,13 @@ func main() {
 
 	//Handle public files (eg css)
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
+	//send files that have been uploaded
+	http.Handle("/tmp/", http.StripPrefix("/tmp/", http.FileServer(http.Dir("tmp"))))
 	//Handlers for different URLs
 	http.HandleFunc("/newpost", newPostHandler)
+	//Handler for file upload
+	http.HandleFunc("/upload", uploadHandler)
+	//Default 'Catch All' Handler
 	http.HandleFunc("/", handler)
 
 	//Run server. Print any error messages.
