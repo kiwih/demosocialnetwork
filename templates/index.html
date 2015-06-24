@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<link rel="stylesheet" href="/public/style.css" />
+</head>
+
+<body>
+	<div id="contents">
+		<div id="title">
+			<h1>Smurfbook</h1>
+		</div>
+
+		<div id='postsBox'>
+		{{if not .}}
+			<h3>There doesn't appear to be any messages yet!</h3>
+		{{end}}
+		{{range $index, $post := .}}
+			{{template "post" $post}}
+		{{end}}
+		</div>
+		<div class="newPost">
+			<form class="postForm" action="/newpost" method="POST">
+				Name: <input type="text" name="Name" />
+				Message: <input type="text" name="Post" />
+				<input type="submit" value="Post" />
+			</form>
+		</div>
+	</div>
+</body>
+
+</html>
+
+{{define "post"}}
+	<div class="post">
+			<div class="postContents">
+				{{.Time.Format "3:04PM"}} -- <b>{{.Name}}</b> <i>says:</i> {{.Message}}
+			</div>
+			{{range $index, $post := .Replies}}
+				{{template "post" $post}}
+			{{end}}
+			<form class="replyForm" action="/newpost" method="POST">
+				Name: <input type="text" name="Name" />
+				Message: <input type="text" name="Reply" />
+				<input type="hidden" name="ReplyId" value="{{.Id}}" />
+				<input type="submit" value="Reply" />
+			</form>
+		</div>
+{{end}}
