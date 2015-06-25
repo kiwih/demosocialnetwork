@@ -10,11 +10,8 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -24,7 +21,7 @@ type Post struct {
 	Id      string
 	Name    string
 	Message string
-	isFile  bool
+	IsFile  bool
 	Time    time.Time
 	Replies []Post
 }
@@ -38,8 +35,8 @@ func newPostHandler(w http.ResponseWriter, req *http.Request) {
 
 	messageStr := req.FormValue("Post") //when we are creating a new post, this contains the post message
 
-	replyStr := req.FormValue("Reply")     //when we are replying to a post this contains the reply message
-	replyIdStr := req.FormValue("ReplyId") //when we are replying to a post, this contains the CSV id of that post
+	//	replyStr := req.FormValue("Reply")     //when we are replying to a post this contains the reply message
+	//	replyIdStr := req.FormValue("ReplyId") //when we are replying to a post, this contains the CSV id of that post
 
 	currentTime := time.Now()
 	//Check to see if we are creating a New post
@@ -53,117 +50,127 @@ func newPostHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		//...then append it to the global Posts array.
 		Posts = append(Posts, newPost)
-	} else if replyStr != "" && nameStr != "" && replyIdStr != "" { //check if we are creating a Reply post
 
-		//Replying to a post is a little more complicated than creating a new one, as we need to
-		//track down the post we're replying to before we append to its .Replies
-		//The process, however, can be broken down into a simple 5-step algorithm
-
-		//Step 1: Convert the string of comma separated values into an array of integers
-		Ids := strings.Split(replyIdStr, ",")
-		IdInts := make([]int, len(Ids))
-		var err error
-		var IdInt int
-		for i, IdStr := range Ids {
-			IdInt, err = strconv.Atoi(IdStr)
-			if err != nil {
-				break
-			}
-			IdInts[i] = IdInt
-		}
-		if err == nil {
-			//Step 2: find the post we are replying to
-			pAddr := &Posts[IdInts[0]]
-
-			for i, Id := range IdInts {
-				if i == 0 {
-					continue
-				}
-				pAddr = &pAddr.Replies[Id]
-			}
-
-			//Step 3: Generate the ID of the new post
-			newId := strconv.Itoa(IdInts[0])
-
-			IdInts = append(IdInts, len(pAddr.Replies))
-
-			for i, Id := range IdInts {
-				if i == 0 {
-					continue
-				}
-				newId += "," + strconv.Itoa(Id)
-			}
-
-			//Step 4: Generate the new post
-
-			newPost := Post{
-				Id:      newId,
-				Name:    nameStr,
-				Message: replyStr,
-				Time:    currentTime,
-			}
-
-			//Step 5: Append the new post to the post we're replying to
-			pAddr.Replies = append(pAddr.Replies, newPost)
-		}
 	}
+	// else if replyStr != "" && nameStr != "" && replyIdStr != "" { //check if we are creating a Reply post
+
+	// 	//Replying to a post is a little more complicated than creating a new one, as we need to
+	// 	//track down the post we're replying to before we append to its .Replies
+	// 	//The process, however, can be broken down into a simple 5-step algorithm
+
+	// 	//Step 1: Convert the string of comma separated values into an array of integers
+	// 	Ids := strings.Split(replyIdStr, ",")
+	// 	IdInts := make([]int, len(Ids))
+	// 	var err error
+	// 	var IdInt int
+	// 	for i, IdStr := range Ids {
+	// 		IdInt, err = strconv.Atoi(IdStr)
+	// 		if err != nil {
+	// 			break
+	// 		}
+	// 		IdInts[i] = IdInt
+	// 	}
+	// 	if err == nil {
+	// 		//Step 2: find the post we are replying to
+	// 		pAddr := &Posts[IdInts[0]]
+
+	// 		for i, Id := range IdInts {
+	// 			if i == 0 {
+	// 				continue
+	// 			}
+	// 			pAddr = &pAddr.Replies[Id]
+	// 		}
+
+	// 		//Step 3: Generate the ID of the new post
+	// 		newId := strconv.Itoa(IdInts[0])
+
+	// 		IdInts = append(IdInts, len(pAddr.Replies))
+
+	// 		for i, Id := range IdInts {
+	// 			if i == 0 {
+	// 				continue
+	// 			}
+	// 			newId += "," + strconv.Itoa(Id)
+	// 		}
+
+	// 		//Step 4: Generate the new post
+
+	// 		newPost := Post{
+	// 			Id:      newId,
+	// 			Name:    nameStr,
+	// 			Message: replyStr,
+	// 			Time:    currentTime,
+	// 		}
+
+	// 		//Step 5: Append the new post to the post we're replying to
+	// 		pAddr.Replies = append(pAddr.Replies, newPost)
+	// 	}
+	// } else {
+	// 	fmt.Fprintln(w, "Bad request: missing fields.")
+	// 	return
+	// }
 
 	http.Redirect(w, req, "/", http.StatusSeeOther)
 }
 
-// function to process file uploads
-func uploadHandler(w http.ResponseWriter, req *http.Request) {
+// //function to process file uploads
+// func uploadHandler(w http.ResponseWriter, req *http.Request) {
 
-	if req.Method != "POST" {
-		handler(w, req)
-		return
-	}
-	// the FormFile function takes in the POST input id file
-	file, header, err := req.FormFile("file")
-	if err != nil {
-		fmt.Println(err.Error)
-		return
-	}
+// 	if req.Method != "POST" {
+// 		handler(w, req)
+// 		return
+// 	}
+// 	// the FormFile function takes in the POST input id file
+// 	file, header, err := req.FormFile("file")
+// 	if err != nil {
+// 		fmt.Fprintln(w, err.Error)
+// 		return
+// 	}
 
-	defer file.Close()
+// 	var nameStr = req.FormValue("Name")
+// 	if nameStr == "" {
+// 		fmt.Fprintln(w, "No name supplied")
+// 		return
+// 	}
 
-	out, err := os.Create("./tmp/" + header.Filename)
-	if err != nil {
-		fmt.Println(err.Error)
-		return
-	}
-	if err != nil {
-		fmt.Fprintf(w, "Unable to create the file for writing. Check your write access privilege")
-		return
-	}
+// 	defer file.Close()
 
-	defer out.Close()
+// 	out, err := os.Create("./public/uploads/" + header.Filename)
+// 	if err != nil {
+// 		fmt.Println(err.Error)
+// 		return
+// 	}
+// 	if err != nil {
+// 		fmt.Fprintf(w, "Unable to create the file for writing. Check your write access privilege")
+// 		return
+// 	}
 
-	// write the content from POST to the file
-	_, err = io.Copy(out, file)
-	if err != nil {
-		fmt.Fprintln(w, err)
-	}
+// 	defer out.Close()
 
-	fmt.Fprintf(w, "File uploaded successfully : ")
-	fmt.Fprintf(w, header.Filename)
+// 	// write the content from POST to the file
+// 	_, err = io.Copy(out, file)
+// 	if err != nil {
+// 		fmt.Fprintln(w, err)
+// 		return
+// 	}
 
-	// Save Filename into post and set flag.
-	var newId = len(Posts)
-	var nameStr = req.FormValue("Name")
-	var replyStr = "/tmp/" + header.Filename
-	var currentTime = time.Now()
+// 	// Save Filename into post and set flag.
+// 	var newId = len(Posts)
+// 	var replyStr = "/public/uploads/" + header.Filename
+// 	var currentTime = time.Now()
 
-	newPost := Post{
-		Id:      string(newId),
-		Name:    nameStr,
-		Message: replyStr,
-		Time:    currentTime,
-		isFile:  true,
-	}
+// 	newPost := Post{
+// 		Id:      string(newId),
+// 		Name:    nameStr,
+// 		Message: replyStr,
+// 		Time:    currentTime,
+// 		IsFile:  true,
+// 	}
 
-	Posts = append(Posts, newPost)
-}
+// 	Posts = append(Posts, newPost)
+
+// 	http.Redirect(w, req, "/", http.StatusSeeOther)
+// }
 
 //This handler is the home page, and just shows the client the templates that render all the posts.
 func handler(w http.ResponseWriter, req *http.Request) {
@@ -222,11 +229,9 @@ func main() {
 	//Handle public files (eg css)
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	//send files that have been uploaded
-	http.Handle("/tmp/", http.StripPrefix("/tmp/", http.FileServer(http.Dir("tmp"))))
-	//Handlers for different URLs
 	http.HandleFunc("/newpost", newPostHandler)
 	//Handler for file upload
-	http.HandleFunc("/upload", uploadHandler)
+	//	http.HandleFunc("/upload", uploadHandler)
 	//Default 'Catch All' Handler
 	http.HandleFunc("/", handler)
 

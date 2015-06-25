@@ -37,6 +37,10 @@ h1 {
 	padding:0px;
 }
 
+img {
+	max-width:600px;
+}
+
 #postsBox{
 	position:relative;
 	width:90%;

@@ -19,16 +19,20 @@
 		{{end}}
 		</div>
 		<div class="newPost">
+			<b>Submit a text post:</b>
 			<form class="postForm" action="/newpost" method="POST">
 				Name: <input type="text" name="Name" />
 				Message: <input type="text" name="Post" />
 				<input type="submit" value="Post" />
 			</form>
+			{{/*<br>
+			<b>Submit an image post:</b>
 			<form action="/upload" method="post" enctype="multipart/form-data">
-		 	<label for="file">Filename:</label>
-		 	<input type="file" name="file" id="file">
-		 	<input type="submit" name="submit" value="Submit">
-	 	</form> 
+				Name: <input type="text" name="Name" />
+			 	<label for="file">Filename:</label>
+			 	<input type="file" name="file" id="file">
+			 	<input type="submit" name="submit" value="Submit">
+	 		</form> */}}
 		</div>
 		
 	</div>
@@ -39,11 +43,11 @@
 {{define "post"}}
 	<div class="post">
 			<div class="postContents">
-			{{if !.isFile}}
+			{{if not .IsFile}}
 				{{.Time.Format "3:04PM"}} -- <b>{{.Name}}</b> <i>says:</i> {{.Message}}
 			{{else}}
-				{{.Time.Format "3:04PM"}} -- <b>{{.Name}}</b> <i>has uploaded a file</i>
-				<img src={{.Mesage}}/>
+				{{.Time.Format "3:04PM"}} -- <b>{{.Name}}</b> <i>has uploaded a file:</i><br>
+				<img src='{{.Message}}'/>
 			{{end}}
 			</div>
 			{{range $index, $post := .Replies}}
